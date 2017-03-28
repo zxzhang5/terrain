@@ -60,99 +60,6 @@ var defaultExtent = {
     height: 1
 };
 
-function quantile(h, q) {
-    var sortedh = [];
-    for (var i = 0; i < h.length; i++) {
-        sortedh[i] = h[i];
-    }
-    sortedh.sort(d3.ascending);
-    return d3.quantile(sortedh, q);
-}
-
-// create a list of zeroes for each vertex in a mesh
-function zero(mesh) {
-    var z = [];
-    for (var i = 0; i < mesh.vxs.length; i++) {
-        z[i] = 0;
-    }
-    z.mesh = mesh;
-    return z;
-}
-
-// HELP
-function slope(mesh, direction) {
-    return mesh.map(function (x) {
-        return x[0] * direction[0] + x[1] * direction[1];
-    });
-}
-
-// HELP
-function cone(mesh, slope) {
-    return mesh.map(function (x) {
-        return Math.pow(x[0] * x[0] + x[1] * x[1], 0.5) * slope;
-    });
-}
-
-// HELP
-function map(h, f) {
-    var newh = h.map(f);
-    newh.mesh = h.mesh;
-    return newh;
-}
-
-// HELP
-function normalize(h) {
-    var lo = d3.min(h);
-    var hi = d3.max(h);
-    return map(h, function (x) {return (x - lo) / (hi - lo)});
-}
-
-// HELP
-function peaky(h) {
-    return map(normalize(h), Math.sqrt);
-}
-
-function add() {
-    var n = arguments[0].length;
-    var newvals = zero(arguments[0].mesh);
-    for (var i = 0; i < n; i++) {
-        for (var j = 0; j < arguments.length; j++) {
-            newvals[i] += arguments[j][i];
-        }
-    }
-    return newvals;
-}
-
-function mountains(mesh, n, r) {
-    r = r || 0.05;
-    var mounts = [];
-    for (var i = 0; i < n; i++) {
-        mounts.push([mesh.extent.width * (Math.random() - 0.5), mesh.extent.height * (Math.random() - 0.5)]);
-    }
-    var newvals = zero(mesh);
-    for (var i = 0; i < mesh.vxs.length; i++) {
-        var p = mesh.vxs[i];
-        for (var j = 0; j < n; j++) {
-            var m = mounts[j];
-            newvals[i] += Math.pow(Math.exp(-((p[0] - m[0]) * (p[0] - m[0]) + (p[1] - m[1]) * (p[1] - m[1])) / (2 * r * r)), 2);
-        }
-    }
-    return newvals;
-}
-
-function relax(h) {
-    var newh = zero(h.mesh);
-    for (var i = 0; i < h.length; i++) {
-        var nbs = neighbours(h.mesh, i);
-        if (nbs.length < 3) {
-            newh[i] = 0;
-            continue;
-        }
-        newh[i] = d3.mean(nbs.map(function (j) {return h[j]}));
-    }
-    return newh;
-}
-
 function downhill(h) {
     if (h.downhill) return h.downhill;
     function downfrom(i) {
@@ -296,15 +203,6 @@ function doErosion(h, amount, n) {
         h = fillSinks(h);
     }
     return h;
-}
-
-function setSeaLevel(h, q) {
-    var newh = zero(h.mesh);
-    var delta = quantile(h, q);
-    for (var i = 0; i < h.length; i++) {
-        newh[i] = h[i] - delta;
-    }
-    return newh;
 }
 
 function cleanCoast(h, iters) {

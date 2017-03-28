@@ -43,6 +43,7 @@ function meshDraw() {
     visualizePoints(meshSVG, meshDual ? meshVxs : meshPts);
 }
 
+// generate a random set of points
 meshDiv.append("button")
     .text("Generate random points")
     .on("click", function () {
@@ -52,6 +53,8 @@ meshDiv.append("button")
         meshDraw();
     });
 
+// improve the points, replacing them with the
+//	centers of their Voronoi polygons
 meshDiv.append("button")
     .text("Improve points")
     .on("click", function () {
@@ -60,6 +63,7 @@ meshDiv.append("button")
         meshDraw();
     });
 
+// show orignal points OR Voronoi vertices
 var vorBut = meshDiv.append("button")
     .text("Show Voronoi corners")
     .on("click", function () {
@@ -97,6 +101,7 @@ function primDraw() {
 
 primDraw();
 
+// create a flat map
 primDiv.append("button")
     .text("Reset to flat")
     .on("click", function () {
@@ -104,6 +109,7 @@ primDiv.append("button")
         primDraw();
     });
 
+// choose a slope vector, and slope the entire map
 primDiv.append("button")
     .text("Add random slope")
     .on("click", function () {
@@ -111,6 +117,7 @@ primDiv.append("button")
         primDraw();
     });
 
+// slope the map downwards out from the center
 primDiv.append("button")
     .text("Add cone")
     .on("click", function () {
@@ -118,6 +125,7 @@ primDiv.append("button")
         primDraw();
     });
 
+// slope the map upwards out from the center
 primDiv.append("button")
     .text("Add inverted cone")
     .on("click", function () {
@@ -125,6 +133,7 @@ primDiv.append("button")
         primDraw();
     });
 
+// add five randomly chosen mountains
 primDiv.append("button")
     .text("Add five blobs")
     .on("click", function () {
@@ -132,6 +141,7 @@ primDiv.append("button")
         primDraw();
     });
 
+// normalize the height map to 0-1
 primDiv.append("button")
     .text("Normalize heightmap")
     .on("click", function () {
@@ -139,6 +149,7 @@ primDiv.append("button")
         primDraw();
     });
 
+// exaggerate the vertical relief
 primDiv.append("button")
     .text("Round hills")
     .on("click", function () {
@@ -146,6 +157,7 @@ primDiv.append("button")
         primDraw();
     });
 
+// smoothe the terrain
 primDiv.append("button")
     .text("Relax")
     .on("click", function () {
@@ -153,6 +165,7 @@ primDiv.append("button")
         primDraw();
     });
 
+// draw a sea-level line
 primDiv.append("button")
     .text("Set sea level to median")
     .on("click", function () {
