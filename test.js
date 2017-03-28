@@ -1,4 +1,20 @@
-// add a graphial display box to a specified diversion
+/**
+ * this program creates control widgets and displays for
+ * them to update, and invokes the terrain generator to
+ * draw the maps.
+ *
+ * The original was created by Martin O'Leary to demonstrate
+ * the steps of his terrain generation process.  I also find
+ * it useful as a work-bench for playing with the various
+ * parts of the process, and as sample code for how the terrain
+ * generation functions are intended to be used.
+ */
+
+/**
+ * addSVG - add a Scalable Vector Graphics pannel to a div
+ *
+ * @param	division to which pannel should be added
+ */
 function addSVG(div) {
     return div.insert("svg", ":first-child")
         .attr("height", 400)
@@ -6,7 +22,13 @@ function addSVG(div) {
         .attr("viewBox", "-500 -500 1000 1000");
 }
 
-// mesh exerciser
+/**
+ * mesh generation demonstration
+ *
+ *	button: Generate (256) random points
+ *	button: Improve points (to Voronoi polygon vertices)
+ *	button: switch between original points and Voronoi vertices
+ */
 var meshDiv = d3.select("div#mesh");
 var meshSVG = addSVG(meshDiv);
 
@@ -50,7 +72,19 @@ var vorBut = meshDiv.append("button")
         meshDraw();
     });
 
-// primary height map generator
+/**
+ * primary height map demonstration
+ *
+ *	starts with a randomly generated mesh
+ *	button: reset to flat
+ *	button: add random slope
+ *	button: add positive cone
+ *	button: add negative cone
+ *	button: add (5) mountains
+ *	button: round hills
+ *	button: relax terrain
+ *	button: set sea-level to median
+ */
 var primDiv = d3.select("div#prim");
 var primSVG = addSVG(primDiv);
 
@@ -126,7 +160,20 @@ primDiv.append("button")
         primDraw();
     });
 
-// river and erosion generator
+/**
+ * river and erosion demo
+ *	button: generate random height-map
+ *		generate a mesh
+ *		add slope, cone and mountains
+ *		round the peaks
+ *		fill the sinks
+ *		set the sea-level
+ *	button: copy heightmap rom above
+ *	button: run an erosion pass
+ *	button: set sea level to median altitude
+ *	button: clean the coast lines
+ *	button: display erosion rates
+ */
 var erodeDiv = d3.select("div#erode");
 var erodeSVG = addSVG(erodeDiv);
 
@@ -141,6 +188,7 @@ function generateUneroded() {
     return h;
 }
 
+// default: start with the Primary height map
 var erodeH = primH;
 var erodeViewErosion = false;
 
@@ -202,7 +250,14 @@ var erodeBut = erodeDiv.append("button")
         erodeDraw();
     });
 
-// complete physical landscape
+/**
+ * physical landscape demo
+ *	button: generate random height map
+ *	button: copy map from above
+ *	button: show the coast line
+ *	button: show rivers
+ *	button: show slope shading
+ */
 var physDiv = d3.select("div#phys");
 var physSVG = addSVG(physDiv);
 var physH = erodeH;
@@ -282,7 +337,13 @@ var physHeightBut = physDiv.append("button")
         physDraw();
     });
 
-// city placement
+/**
+ * city placement demo
+ *	button: generate new height map
+ *	button: copy map from above
+ *	button: add a new city
+ *	button show territories/city location scores
+ */
 var cityDiv = d3.select("div#city");
 var citySVG = addSVG(cityDiv);
 
@@ -343,6 +404,11 @@ var cityViewBut = cityDiv.append("button")
 
 /*
  * complete map creation
+ *
+ *	Button: copy map from above
+ *	Button: generate high resolution map
+ *
+ * (disabled for now)
 var finalDiv = d3.select("div#final");
 var finalSVG = addSVG(finalDiv);
 finalDiv.append("button")
