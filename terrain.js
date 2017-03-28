@@ -1,17 +1,34 @@
 "use strict";
 
+/**
+ * runif: random number within a range
+ * 
+ * @param lo	low end of range
+ * @param hi	high end of range
+ * @return	number between lo and hi
+ */
 function runif(lo, hi) {
     return lo + Math.random() * (hi - lo);
 }
 
+/**
+ * rnorm - (kinky) random vector generation
+ *
+ *	This routine is meant to be called twice, and returns 
+ *	first an X coordinate, and then a Y coordiante.
+ */
 var rnorm = (function () {
     var z2 = null;
+
     function rnorm() {
+	// if we have a y coordinate, return it
         if (z2 != null) {
             var tmp = z2;
             z2 = null;
             return tmp;
         }
+
+	// loop until we get a radius <= 1
         var x1 = 0;
         var x2 = 0;
         var w = 2.0;
@@ -20,6 +37,7 @@ var rnorm = (function () {
             x2 = runif(-1, 1);
             w = x1 * x1 + x2 * x2;
         }
+	// HELP: this has me baffled
         w = Math.sqrt(-2 * Math.log(w) / w);
         z2 = x2 * w;
         return x1 * w;
@@ -27,6 +45,12 @@ var rnorm = (function () {
     return rnorm;
 })();
 
+/**
+ * randomVector - generate a random vector
+ * 
+ * @param	maximum size
+ * @return	<x,y> coordinate
+ */
 function randomVector(scale) {
     return [scale * rnorm(), scale * rnorm()];
 }
@@ -35,139 +59,6 @@ var defaultExtent = {
     width: 1,
     height: 1
 };
-
-function generatePoints(n, extent) {
-    extent = extent || defaultExtent;
-    var pts = [];
-    for (var i = 0; i < n; i++) {
-        pts.push([(Math.random() - 0.5) * extent.width, (Math.random() - 0.5) * extent.height]);
-    }
-    return pts;
-}
-
-function centroid(pts) {
-    var x = 0;
-    var y = 0;
-    for (var i = 0; i < pts.length; i++) {
-        x += pts[i][0];
-        y += pts[i][1];
-    }
-    return [x/pts.length, y/pts.length];
-}
-
-function improvePoints(pts, n, extent) {
-    n = n || 1;
-    extent = extent || defaultExtent;
-    for (var i = 0; i < n; i++) {
-        pts = voronoi(pts, extent)
-            .polygons(pts)
-            .map(centroid);
-    }
-    return pts;
-}
-
-function generateGoodPoints(n, extent) {
-    extent = extent || defaultExtent;
-    var pts = generatePoints(n, extent);
-    pts = pts.sort(function (a, b) {
-        return a[0] - b[0];
-    });
-    return improvePoints(pts, 1, extent);
-}
-
-function voronoi(pts, extent) {
-    extent = extent || defaultExtent;
-    var w = extent.width/2;
-    var h = extent.height/2;
-    return d3.voronoi().extent([[-w, -h], [w, h]])(pts);
-}
-
-function makeMesh(pts, extent) {
-    extent = extent || defaultExtent;
-    var vor = voronoi(pts, extent);
-    var vxs = [];
-    var vxids = {};
-    var adj = [];
-    var edges = [];
-    var tris = [];
-    for (var i = 0; i < vor.edges.length; i++) {
-        var e = vor.edges[i];
-        if (e == undefined) continue;
-        var e0 = vxids[e[0]];
-        var e1 = vxids[e[1]];
-        if (e0 == undefined) {
-            e0 = vxs.length;
-            vxids[e[0]] = e0;
-            vxs.push(e[0]);
-        }
-        if (e1 == undefined) {
-            e1 = vxs.length;
-            vxids[e[1]] = e1;
-            vxs.push(e[1]);
-        }
-        adj[e0] = adj[e0] || [];
-        adj[e0].push(e1);
-        adj[e1] = adj[e1] || [];
-        adj[e1].push(e0);
-        edges.push([e0, e1, e.left, e.right]);
-        tris[e0] = tris[e0] || [];
-        if (!tris[e0].includes(e.left)) tris[e0].push(e.left);
-        if (e.right && !tris[e0].includes(e.right)) tris[e0].push(e.right);
-        tris[e1] = tris[e1] || [];
-        if (!tris[e1].includes(e.left)) tris[e1].push(e.left);
-        if (e.right && !tris[e1].includes(e.right)) tris[e1].push(e.right);
-    }
-
-    var mesh = {
-        pts: pts,
-        vor: vor,
-        vxs: vxs,
-        adj: adj,
-        tris: tris,
-        edges: edges,
-        extent: extent
-    }
-    mesh.map = function (f) {
-        var mapped = vxs.map(f);
-        mapped.mesh = mesh;
-        return mapped;
-    }
-    return mesh;
-}
-
-
-
-function generateGoodMesh(n, extent) {
-    extent = extent || defaultExtent;
-    var pts = generateGoodPoints(n, extent);
-    return makeMesh(pts, extent);
-}
-function isedge(mesh, i) {
-    return (mesh.adj[i].length < 3);
-}
-
-function isnearedge(mesh, i) {
-    var x = mesh.vxs[i][0];
-    var y = mesh.vxs[i][1];
-    var w = mesh.extent.width;
-    var h = mesh.extent.height;
-    return x < -0.45 * w || x > 0.45 * w || y < -0.45 * h || y > 0.45 * h;
-}
-
-function neighbours(mesh, i) {
-    var onbs = mesh.adj[i];
-    var nbs = [];
-    for (var i = 0; i < onbs.length; i++) {
-        nbs.push(onbs[i]);
-    }
-    return nbs;
-}
-
-function distance(mesh, i, j) {
-    var p = mesh.vxs[i];
-    var q = mesh.vxs[j];
-    return Math.sqrt((p[0] - q[0]) * (p[0] - q[0]) + (p[1] - q[1]) * (p[1] - q[1]));
-}
 
 function quantile(h, q) {
     var sortedh = [];
@@ -178,6 +69,7 @@ function quantile(h, q) {
     return d3.quantile(sortedh, q);
 }
 
+// create a list of zeroes for each vertex in a mesh
 function zero(mesh) {
     var z = [];
     for (var i = 0; i < mesh.vxs.length; i++) {
@@ -187,30 +79,35 @@ function zero(mesh) {
     return z;
 }
 
+// HELP
 function slope(mesh, direction) {
     return mesh.map(function (x) {
         return x[0] * direction[0] + x[1] * direction[1];
     });
 }
 
+// HELP
 function cone(mesh, slope) {
     return mesh.map(function (x) {
         return Math.pow(x[0] * x[0] + x[1] * x[1], 0.5) * slope;
     });
 }
 
+// HELP
 function map(h, f) {
     var newh = h.map(f);
     newh.mesh = h.mesh;
     return newh;
 }
 
+// HELP
 function normalize(h) {
     var lo = d3.min(h);
     var hi = d3.max(h);
     return map(h, function (x) {return (x - lo) / (hi - lo)});
 }
 
+// HELP
 function peaky(h) {
     return map(normalize(h), Math.sqrt);
 }
