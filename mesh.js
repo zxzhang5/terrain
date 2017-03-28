@@ -10,7 +10,6 @@
  *		tris	... list of <x,y> coordinates neighbors of each vertex
  *
  *		edges	... list of [index, index, <x,y>, <x,y>] tupples
- *   var tris = [];	// HELP ... how is this different from vxs?
  *
  *	O'Leary observed that a map created on a square grid never
  *	loses its regularity, so he wanted to build the map on an
@@ -25,6 +24,8 @@
  *	2. He uses those (improved) points as the centers for a
  *	   second Voronoi tesselation.  The edges of those polygons
  *	   are then converted into a triangular grid
+ *
+ * NOTE: <x,y> coordinates are relative to the center of the map
  */
 "use strict";
 
@@ -66,12 +67,12 @@ function centroid(pts) {
  * @param 	set of <x,y> points
  * @param	number of smoothing iterations
  * @param	extent (range limits)
- * @return	list of <x,y> coordinates
+ * @return	list of smoother <x,y> coordinates
  *
  * each iteration smooths out the distribution of the points
  *	for each point in the set
  *	    generate surrounding Voronoi polygon
- *	    return the set of all their vertices
+ *	    use the centroid of that polygon
  */
 function improvePoints(pts, n, extent) {
     n = n || 1;
@@ -133,7 +134,7 @@ function makeMesh(pts, extent) {
     var vxids = {};	// vertex ID #s
     var adj = [];	// adjacent vertices	
     var edges = [];	// list of vertex IDs and positions
-    var tris = [];	// HELP ... how is this different from vxs?
+    var tris = [];	// coordinates of neighbors of this vertex
 
     // for each edge of each Voronoi polygon
     for (var i = 0; i < vor.edges.length; i++) {
@@ -186,7 +187,9 @@ function makeMesh(pts, extent) {
         extent: extent	// the scale 
     }
 
-    // HELP
+    /*
+     * mesh.map(f) applies f to every vertex in mesh
+     */
     mesh.map = function (f) {
         var mapped = vxs.map(f);
         mapped.mesh = mesh;
