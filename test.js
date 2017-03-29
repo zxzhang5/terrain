@@ -79,7 +79,7 @@ var vorBut = meshDiv.append("button")
 /**
  * primary height map demonstration
  *
- *	starts with a randomly generated mesh
+ *	starts with a randomly generated 4K mesh
  *	button: reset to flat
  *	button: add random slope
  *	button: add positive cone
@@ -421,7 +421,7 @@ var cityViewBut = cityDiv.append("button")
  *	Button: copy map from above
  *	Button: generate high resolution map
  *
- * (disabled for now)
+ */
 var finalDiv = d3.select("div#final");
 var finalSVG = addSVG(finalDiv);
 finalDiv.append("button")
@@ -435,4 +435,3 @@ finalDiv.append("button")
     .on("click", function () {
         doMap(finalSVG, defaultParams);
     });
- */
