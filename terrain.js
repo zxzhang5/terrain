@@ -60,29 +60,6 @@ var defaultExtent = {
     height: 1
 };
 
-function downhill(h) {
-    if (h.downhill) return h.downhill;
-    function downfrom(i) {
-        if (isedge(h.mesh, i)) return -2;
-        var best = -1;
-        var besth = h[i];
-        var nbs = neighbours(h.mesh, i);
-        for (var j = 0; j < nbs.length; j++) {
-            if (h[nbs[j]] < besth) {
-                besth = h[nbs[j]];
-                best = nbs[j];
-            }
-        }
-        return best;
-    }
-    var downs = [];
-    for (var i = 0; i < h.length; i++) {
-        downs[i] = downfrom(i);
-    }
-    h.downhill = downs;
-    return downs;
-}
-
 function findSinks(h) {
     var dh = downhill(h);
     var sinks = [];
@@ -153,22 +130,6 @@ function getFlux(h) {
         }
     }
     return flux;
-}
-
-function getSlope(h) {
-    var dh = downhill(h);
-    var slope = zero(h.mesh);
-    for (var i = 0; i < h.length; i++) {
-        var s = trislope(h, i);
-        slope[i] = Math.sqrt(s[0] * s[0] + s[1] * s[1]);
-        continue;
-        if (dh[i] < 0) {
-            slope[i] = 0;
-        } else {
-            slope[i] = (h[i] - h[dh[i]]) / distance(h.mesh, i, dh[i]);
-        }
-    }
-    return slope;
 }
 
 function erosionRate(h) {
@@ -248,26 +209,6 @@ function cleanCoast(h, iters) {
         h = newh;
     }
     return h;
-}
-
-function trislope(h, i) {
-    var nbs = neighbours(h.mesh, i);
-    if (nbs.length != 3) return [0,0];
-    var p0 = h.mesh.vxs[nbs[0]];
-    var p1 = h.mesh.vxs[nbs[1]];
-    var p2 = h.mesh.vxs[nbs[2]];
-
-    var x1 = p1[0] - p0[0];
-    var x2 = p2[0] - p0[0];
-    var y1 = p1[1] - p0[1];
-    var y2 = p2[1] - p0[1];
-
-    var det = x1 * y2 - x2 * y1;
-    var h1 = h[nbs[1]] - h[nbs[0]];
-    var h2 = h[nbs[2]] - h[nbs[0]];
-
-    return [(y2 * h1 - y1 * h2) / det,
-            (-x2 * h1 + x1 * h2) / det];
 }
 
 function cityScore(h, cities) {
@@ -465,59 +406,10 @@ function relaxPath(path) {
     newpath.push(path[path.length - 1]);
     return newpath;
 }
-function visualizePoints(svg, pts) {
-    var circle = svg.selectAll('circle').data(pts);
-    circle.enter()
-        .append('circle');
-    circle.exit().remove();
-    d3.selectAll('circle')
-        .attr('cx', function (d) {return 1000*d[0]})
-        .attr('cy', function (d) {return 1000*d[1]})
-        .attr('r', 100 / Math.sqrt(pts.length));
-}
-
-function makeD3Path(path) {
-    var p = d3.path();
-    p.moveTo(1000*path[0][0], 1000*path[0][1]);
-    for (var i = 1; i < path.length; i++) {
-        p.lineTo(1000*path[i][0], 1000*path[i][1]);
-    }
-    return p.toString();
-}
-
-function visualizeVoronoi(svg, field, lo, hi) {
-    if (hi == undefined) hi = d3.max(field) + 1e-9;
-    if (lo == undefined) lo = d3.min(field) - 1e-9;
-    var mappedvals = field.map(function (x) {return x > hi ? 1 : x < lo ? 0 : (x - lo) / (hi - lo)});
-    var tris = svg.selectAll('path.field').data(field.mesh.tris)
-    tris.enter()
-        .append('path')
-        .classed('field', true);
-    
-    tris.exit()
-        .remove();
-
-    svg.selectAll('path.field')
-        .attr('d', makeD3Path)
-        .style('fill', function (d, i) {
-            return d3.interpolateViridis(mappedvals[i]);
-        });
-}
 
 function visualizeDownhill(h) {
     var links = getRivers(h, 0.01);
     drawPaths('river', links);
-}
-
-function drawPaths(svg, cls, paths) {
-    var paths = svg.selectAll('path.' + cls).data(paths)
-    paths.enter()
-            .append('path')
-            .classed(cls, true)
-    paths.exit()
-            .remove();
-    svg.selectAll('path.' + cls)
-        .attr('d', makeD3Path);
 }
 
 function visualizeSlopes(svg, render) {

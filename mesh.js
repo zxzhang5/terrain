@@ -271,3 +271,64 @@ function distance(mesh, i, j) {
     var q = mesh.vxs[j];
     return Math.sqrt((p[0] - q[0]) * (p[0] - q[0]) + (p[1] - q[1]) * (p[1] - q[1]));
 }
+
+
+/**
+ * visualizePoints - plot points on a map
+ *	
+ * @param	SVG field 
+ *		(1000x1000, centered <0,0>)
+ * @param	list of <x,y> coordinates
+ *		in range <-0.5,-0.5> to <0.5,0.5>
+ */
+function visualizePoints(svg, pts) {
+    // remove all exising circles from the SVG
+    var circle = svg.selectAll('circle').data(pts);
+    circle.enter()		// HELP
+        .append('circle');	// HELP
+    circle.exit().remove();	// HELP
+
+    // translate 0-1 coordinates into 1Kx1K coordinaces
+    // with radius of 1% of field with
+    d3.selectAll('circle')
+        .attr('cx', function (d) {return 1000*d[0]})
+        .attr('cy', function (d) {return 1000*d[1]})
+        .attr('r', 100 / Math.sqrt(pts.length));
+}
+
+/**
+ * makeD3Path - construct path connecting a set of points
+ *	start at first point, draw line to each subsequent point
+ *
+ * @param	list of <x,y> coordinates
+ * @return	string representation of connecting path
+ */
+function makeD3Path(path) {
+    var p = d3.path();
+    p.moveTo(1000*path[0][0], 1000*path[0][1]);
+    for (var i = 1; i < path.length; i++) {
+        p.lineTo(1000*path[i][0], 1000*path[i][1]);
+    }
+    return p.toString();
+}
+
+/**
+ * drawPaths - draw line connecting a set of points
+ *
+ * @param	SVG field
+ * @param	class of path to draw
+ * @param	list of <x,y> coordinates
+ */
+function drawPaths(svg, cls, paths) {
+    // remove all existing paths from the SVG
+    var paths = svg.selectAll('path.' + cls).data(paths)
+    paths.enter()
+            .append('path')
+            .classed(cls, true)
+    paths.exit()
+            .remove();
+
+    // draw line along the connecting path
+    svg.selectAll('path.' + cls)
+        .attr('d', makeD3Path);
+}
