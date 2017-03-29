@@ -3,9 +3,7 @@
 
 	<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <link rel="stylesheet" href="./terrain.css">
-	<title>
-		TEST SCRIPT
-	</title>
+	<title>TerrainTest</title>
         
 	<style type="text/css">
 		:root #content > #center > .dose > .dosesingle,
@@ -14,80 +12,81 @@
 	</style>
 </head>
 <body> 
-	<div id="content">	<!-- within a single content box -->
-		<div class="note">
-			<!-- D3 is used for Voronoi tesselation -->
-			<script src="https://d3js.org/d3.v4.min.js"></script>
-			<!-- Priority queues are used to create territories -->
-			<script src="./priority-queue.js"></script>
-			<!-- Lauguage is used to generate city/territory names -->
-			<script src="./language.js"></script>
+	<div class="note">
+		<!-- Imported modules:
+			D3 Voronoi tesselation is used for mesh generation.
+			Priority queues are used to generate territories.
+			Language is used to generate city/region names.
+			-->
+		<script src="https://d3js.org/d3.v4.min.js"></script>
+		<script src="http://cdn.rawgit.com/adamhooper/js-priority-queue/master/priority-queue.js"></script>
+		<script src="http://cdn.rawgit.com/mewo2/naming-language/master/language.js"></script>
 
-			<style>
-			    path, line {
-				fill: none;
-				stroke: black;
-				stroke-linecap: round;
-			    }
+		<style>
+		    path, line {
+			fill: none;
+			stroke: black;
+			stroke-linecap: round;
+		    }
 
-			    .field {
-				stroke: none;
-				fill-opacity: 1.0;
-			    }
+		    .field {
+			stroke: none;
+			fill-opacity: 1.0;
+		    }
 
-			    .slope {
-				stroke-width: 1;
-			    }
+		    .slope {
+			stroke-width: 1;
+		    }
 
-			    .river {
-				stroke-width: 2;
-			    }
+		    .river {
+			stroke-width: 2;
+		    }
 
-			    .coast {
-				stroke-width: 4;
-			    }
+		    .coast {
+			stroke-width: 4;
+		    }
 
-			    .border {
-				stroke-width: 5;
-				stroke-dasharray: 4,4;
-				stroke-linecap: butt;
-			    }
+		    .border {
+			stroke-width: 5;
+			stroke-dasharray: 4,4;
+			stroke-linecap: butt;
+		    }
 
-			    text {	
-				font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
-				color: black;
-				stroke: white;
-				stroke-width: 5;
-				stroke-linejoin: round;
-				paint-order: stroke;
-			    }
+		    text {	
+			font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+			color: black;
+			stroke: white;
+			stroke-width: 5;
+			stroke-linejoin: round;
+			paint-order: stroke;
+		    }
 
-			    text.region {
-				stroke-width:10;
-				font-variant: small-caps;
-			    }
+		    text.region {
+			stroke-width:10;
+			font-variant: small-caps;
+		    }
 
-			    svg {
-				float: right;
-				background-color: white;
-			    }
-			</style>
+		    svg {
+			float: right;
+			background-color: white;
+		    }
+		</style>
 
-			<!-- the terrain generator -->
-			<script src="./mesh.js"></script>
-			<script src="./height.js"></script>
-			<script src="./terrain.js"></script>
+		<!-- modules of the terrain generator -->
+		<script src="./mesh.js"></script>
+		<script src="./height.js"></script>
+		<script src="./terrain.js"></script>
 
-			<!-- create the display diversions -->
-			<div class="example" id="mesh"> </div>	
-			<div class="example" id="prim"> </div>	
-			<div class="example" id="erode"> </div>	
-			<div class="example" id="phys"> </div>	
-			<div class="example" id="city"> </div>	
-			<div class="example" id="final"> </div>	
+		<!-- create the display divisions used in the demo -->
+		<div class="example" id="mesh"> </div>	
+		<div class="example" id="prim"> </div>	
+		<div class="example" id="erode"> </div>	
+		<div class="example" id="phys"> </div>	
+		<div class="example" id="city"> </div>	
+		<div class="example" id="final"> </div>	
 
-			<!-- populate them with rendering controls -->
-			<script src="./test.js"></script>
-		</div>
+		<!-- populate them with rendering controls -->
+		<script src="./test.js"></script>
 	</div>
-</body></html>
+</body>
+</html>
