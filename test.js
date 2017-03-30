@@ -1,4 +1,6 @@
 /**
+ * @module test.js
+ *
  * this program creates control widgets and displays for
  * them to update, and invokes the terrain generator to
  * draw the maps.

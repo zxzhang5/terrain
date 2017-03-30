@@ -60,111 +60,6 @@ var defaultExtent = {
     height: 1
 };
 
-function findSinks(h) {
-    var dh = downhill(h);
-    var sinks = [];
-    for (var i = 0; i < dh.length; i++) {
-        var node = i;
-        while (true) {
-            if (isedge(h.mesh, node)) {
-                sinks[i] = -2;
-                break;
-            }
-            if (dh[node] == -1) {
-                sinks[i] = node;
-                break;
-            }
-            node = dh[node];
-        }
-    }
-}
-
-function fillSinks(h, epsilon) {
-    epsilon = epsilon || 1e-5;
-    var infinity = 999999;
-    var newh = zero(h.mesh);
-    for (var i = 0; i < h.length; i++) {
-        if (isnearedge(h.mesh, i)) {
-            newh[i] = h[i];
-        } else {
-            newh[i] = infinity;
-        }
-    }
-    while (true) {
-        var changed = false;
-        for (var i = 0; i < h.length; i++) {
-            if (newh[i] == h[i]) continue;
-            var nbs = neighbours(h.mesh, i);
-            for (var j = 0; j < nbs.length; j++) {
-                if (h[i] >= newh[nbs[j]] + epsilon) {
-                    newh[i] = h[i];
-                    changed = true;
-                    break;
-                }
-                var oh = newh[nbs[j]] + epsilon;
-                if ((newh[i] > oh) && (oh > h[i])) {
-                    newh[i] = oh;
-                    changed = true;
-                }
-            }
-        }
-        if (!changed) return newh;
-    }
-}
-
-function getFlux(h) {
-    var dh = downhill(h);
-    var idxs = [];
-    var flux = zero(h.mesh); 
-    for (var i = 0; i < h.length; i++) {
-        idxs[i] = i;
-        flux[i] = 1/h.length;
-    }
-    idxs.sort(function (a, b) {
-        return h[b] - h[a];
-    });
-    for (var i = 0; i < h.length; i++) {
-        var j = idxs[i];
-        if (dh[j] >= 0) {
-            flux[dh[j]] += flux[j];
-        }
-    }
-    return flux;
-}
-
-function erosionRate(h) {
-    var flux = getFlux(h);
-    var slope = getSlope(h);
-    var newh = zero(h.mesh);
-    for (var i = 0; i < h.length; i++) {
-        var river = Math.sqrt(flux[i]) * slope[i];
-        var creep = slope[i] * slope[i];
-        var total = 1000 * river + creep;
-        total = total > 200 ? 200 : total;
-        newh[i] = total;
-    }
-    return newh;
-}
-
-function erode(h, amount) {
-    var er = erosionRate(h);
-    var newh = zero(h.mesh);
-    var maxr = d3.max(er);
-    for (var i = 0; i < h.length; i++) {
-        newh[i] = h[i] - amount * (er[i] / maxr);
-    }
-    return newh;
-}
-
-function doErosion(h, amount, n) {
-    n = n || 1;
-    h = fillSinks(h);
-    for (var i = 0; i < n; i++) {
-        h = erode(h, amount);
-        h = fillSinks(h);
-    }
-    return h;
-}
 
 function cleanCoast(h, iters) {
     for (var iter = 0; iter < iters; iter++) {
@@ -211,37 +106,6 @@ function cleanCoast(h, iters) {
     return h;
 }
 
-function cityScore(h, cities) {
-    var score = map(getFlux(h), Math.sqrt);
-    for (var i = 0; i < h.length; i++) {
-        if (h[i] <= 0 || isnearedge(h.mesh, i)) {
-            score[i] = -999999;
-            continue;
-        }
-        score[i] += 0.01 / (1e-9 + Math.abs(h.mesh.vxs[i][0]) - h.mesh.extent.width/2)
-        score[i] += 0.01 / (1e-9 + Math.abs(h.mesh.vxs[i][1]) - h.mesh.extent.height/2)
-        for (var j = 0; j < cities.length; j++) {
-            score[i] -= 0.02 / (distance(h.mesh, cities[j], i) + 1e-9);
-        }
-    }
-    return score;
-}
-function placeCity(render) {
-    render.cities = render.cities || [];
-    var score = cityScore(render.h, render.cities);
-    var newcity = d3.scan(score, d3.descending);
-    render.cities.push(newcity);
-}
-
-function placeCities(render) {
-    var params = render.params;
-    var h = render.h;
-    var n = params.ncities;
-    for (var i = 0; i < n; i++) {
-        placeCity(render);
-    }
-}
-
 function contour(h, level) {
     level = level || 0;
     var edges = [];
@@ -257,94 +121,7 @@ function contour(h, level) {
     return mergeSegments(edges);
 }
 
-function getRivers(h, limit) {
-    var dh = downhill(h);
-    var flux = getFlux(h);
-    var links = [];
-    var above = 0;
-    for (var i = 0; i < h.length; i++) {
-        if (h[i] > 0) above++;
-    }
-    limit *= above / h.length;
-    for (var i = 0; i < dh.length; i++) {
-        if (isnearedge(h.mesh, i)) continue;
-        if (flux[i] > limit && h[i] > 0 && dh[i] >= 0) {
-            var up = h.mesh.vxs[i];
-            var down = h.mesh.vxs[dh[i]];
-            if (h[dh[i]] > 0) {
-                links.push([up, down]);
-            } else {
-                links.push([up, [(up[0] + down[0])/2, (up[1] + down[1])/2]]);
-            }
-        }
-    }
-    return mergeSegments(links).map(relaxPath);
-}
 
-function getTerritories(render) {
-    var h = render.h;
-    var cities = render.cities;
-    var n = render.params.nterrs;
-    if (n > render.cities.length) n = render.cities.length;
-    var flux = getFlux(h);
-    var terr = [];
-    var queue = new PriorityQueue({comparator: function (a, b) {return a.score - b.score}});
-    function weight(u, v) {
-        var horiz = distance(h.mesh, u, v);
-        var vert = h[v] - h[u];
-        if (vert > 0) vert /= 10;
-        var diff = 1 + 0.25 * Math.pow(vert/horiz, 2);
-        diff += 100 * Math.sqrt(flux[u]);
-        if (h[u] <= 0) diff = 100;
-        if ((h[u] > 0) != (h[v] > 0)) return 1000;
-        return horiz * diff;
-    }
-    for (var i = 0; i < n; i++) {
-        terr[cities[i]] = cities[i];
-        var nbs = neighbours(h.mesh, cities[i]);
-        for (var j = 0; j < nbs.length; j++) {
-            queue.queue({
-                score: weight(cities[i], nbs[j]),
-                city: cities[i],
-                vx: nbs[j]
-            });
-        }
-    }
-    while (queue.length) {
-        var u = queue.dequeue();
-        if (terr[u.vx] != undefined) continue;
-        terr[u.vx] = u.city;
-        var nbs = neighbours(h.mesh, u.vx);
-        for (var i = 0; i < nbs.length; i++) {
-            var v = nbs[i];
-            if (terr[v] != undefined) continue;
-            var newdist = weight(u.vx, v);
-            queue.queue({
-                score: u.score + newdist,
-                city: u.city,
-                vx: v
-            });
-        }
-    }
-    terr.mesh = h.mesh;
-    return terr;
-}
-
-function getBorders(render) {
-    var terr = render.terr;
-    var h = render.h;
-    var edges = [];
-    for (var i = 0; i < terr.mesh.edges.length; i++) {
-        var e = terr.mesh.edges[i];
-        if (e[3] == undefined) continue;
-        if (isnearedge(terr.mesh, e[0]) || isnearedge(terr.mesh, e[1])) continue;
-        if (h[e[0]] < 0 || h[e[1]] < 0) continue;
-        if (terr[e[0]] != terr[e[1]]) {
-            edges.push([e[2], e[3]]);
-        }
-    }
-    return mergeSegments(edges).map(relaxPath);
-}
 
 function mergeSegments(segs) {
     var adj = {};
@@ -407,11 +184,6 @@ function relaxPath(path) {
     return newpath;
 }
 
-function visualizeDownhill(h) {
-    var links = getRivers(h, 0.01);
-    drawPaths('river', links);
-}
-
 function visualizeSlopes(svg, render) {
     var h = render.h;
     var strokes = [];
@@ -460,40 +232,6 @@ function visualizeSlopes(svg, render) {
 }
 
 
-function visualizeContour(h, level) {
-    level = level || 0;
-    var links = contour(h, level);
-    drawPaths('coast', links);
-}
-
-function visualizeBorders(h, cities, n) {
-    var links = getBorders(h, getTerritories(h, cities, n));
-    drawPaths('border', links);
-}
-
-
-function visualizeCities(svg, render) {
-    var cities = render.cities;
-    var h = render.h;
-    var n = render.params.nterrs;
-
-    var circs = svg.selectAll('circle.city').data(cities);
-    circs.enter()
-            .append('circle')
-            .classed('city', true);
-    circs.exit()
-            .remove();
-    svg.selectAll('circle.city')
-        .attr('cx', function (d) {return 1000*h.mesh.vxs[d][0]})
-        .attr('cy', function (d) {return 1000*h.mesh.vxs[d][1]})
-        .attr('r', function (d, i) {return i >= n ? 4 : 10})
-        .style('fill', 'white')
-        .style('stroke-width', 5)
-        .style('stroke-linecap', 'round')
-        .style('stroke', 'black')
-        .raise();
-}
-
 function dropEdge(h, p) {
     p = p || 4
     var newh = zero(h.mesh);
@@ -522,20 +260,6 @@ function generateCoast(params) {
     h = fillSinks(h);
     h = cleanCoast(h, 3);
     return h;
-}
-
-function terrCenter(h, terr, city, landOnly) {
-    var x = 0;
-    var y = 0;
-    var n = 0;
-    for (var i = 0; i < terr.length; i++) {
-        if (terr[i] != city) continue;
-        if (landOnly && h[i] <= 0) continue;
-        x += terr.mesh.vxs[i][0];
-        y += terr.mesh.vxs[i][1];
-        n++;
-    }
-    return [x/n, y/n];
 }
 
 function drawLabels(svg, render) {
@@ -716,6 +440,7 @@ function drawLabels(svg, render) {
         .raise();
 
 }
+
 function drawMap(svg, render) {
     render.rivers = getRivers(render.h, 0.01);
     render.coasts = contour(render.h, 0);

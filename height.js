@@ -1,5 +1,5 @@
 /**
- * height.js ... functions to generate/mutate/query height maps
+ * @module height.js ... functions to generate/mutate/query height maps
  *
  * 	a height map is a list of (nomally 0-1) heights,
  *	with a 1x1 correspondance to chosen horizontal mesh

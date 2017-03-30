@@ -1,5 +1,5 @@
 /**
- * mesh ... functions to generate the basic map
+ * @module mesh ... functions to generate the basic map
  *
  *	a mesh is a triangular tessalation of the map.
  *	a mesh includes:
